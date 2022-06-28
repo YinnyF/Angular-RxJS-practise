@@ -33,3 +33,18 @@ Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To u
 ## Further help
 
 To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+
+# Angular-RxJS-practise
+
+## Files & Folders in `src/app`
+| File/Folder  | Description |
+| ------------ | ----------- |
+| home | app welcome page |
+| product-categories | retrieving product categories |
+| products | product features, incl. a service to manage retrieving |
+| shared | shared modules used by multiple features |
+| suppliers | supplier features such as a service to retreive supplier information |
+
+## How to run
+* Install dependencies: `npm i`
+* Start server: `npm start`
