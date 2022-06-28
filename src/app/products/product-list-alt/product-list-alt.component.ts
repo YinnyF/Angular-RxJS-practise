@@ -1,6 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 
-import { catchError, EMPTY } from 'rxjs';
+import { Subscription } from 'rxjs';
 
 import { Product } from '../product';
 import { ProductService } from '../product.service';
@@ -9,20 +9,26 @@ import { ProductService } from '../product.service';
   selector: 'pm-product-list',
   templateUrl: './product-list-alt.component.html'
 })
-export class ProductListAltComponent {
+export class ProductListAltComponent implements OnInit, OnDestroy {
   pageTitle = 'Products';
   errorMessage = '';
   selectedProductId = 0;
 
-  products$ = this.productService.products$
-    .pipe(
-      catchError(err => {
-        this.errorMessage = err;
-        return EMPTY;
-      })
-    );
+  products: Product[] = [];
+  sub!: Subscription;
 
   constructor(private productService: ProductService) { }
+
+  ngOnInit(): void {
+    this.sub = this.productService.getProducts().subscribe({
+      next: products => this.products = products,
+      error: err => this.errorMessage = err
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.sub.unsubscribe();
+  }
 
   onSelected(productId: number): void {
     console.log('Not yet implemented');
