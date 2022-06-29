@@ -1,7 +1,8 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { catchError, EMPTY } from 'rxjs';
+import { catchError, combineLatest, EMPTY, filter, map, Subject, startWith } from 'rxjs';
 import { ProductCategory } from '../product-categories/product-category';
+import { ProductCategoryService } from '../product-categories/product-category.service';
 
 import { Product } from './product';
 import { ProductService } from './product.service';
@@ -14,9 +15,13 @@ import { ProductService } from './product.service';
 export class ProductListComponent {
   pageTitle = 'Product List';
   errorMessage = '';
-  categories: ProductCategory[] = [];
+  // selectedCategoryId?: number;
 
-  products$ = this.productService.productsWithCategory$
+  // create action stream
+  private categorySelectedSubject = new Subject<number>();
+  categorySelectedAction$ = this.categorySelectedSubject.asObservable();
+
+  categories$ = this.productCategoryService.productCategories$
     .pipe(
       catchError(err => {
         this.errorMessage = err;
@@ -24,13 +29,53 @@ export class ProductListComponent {
       })
     );
 
-  constructor(private productService: ProductService) { }
+
+  products$ = combineLatest([
+    this.productService.productsWithCategory$,
+    this.categorySelectedAction$
+      .pipe(
+        // set initial value
+        startWith(0)
+      ),
+  ]).pipe(
+    map(([products, selectedCategoryId]) =>
+      products.filter(product =>
+        selectedCategoryId ? product.categoryId === selectedCategoryId : true
+      )
+    ),
+    catchError(err => {
+      this.errorMessage = err;
+      return EMPTY;
+    })
+  );
+  // products$ = this.productService.productsWithCategory$
+  //   .pipe(
+  //     catchError(err => {
+  //       this.errorMessage = err;
+  //       return EMPTY;
+  //     })
+  //   );
+
+  // productsSimpleFilter$ = this.productService.productsWithCategory$
+  //   .pipe(
+  //     map(products =>
+  //       products.filter(product =>
+  //         this.selectedCategoryId ? this.selectedCategoryId === product.categoryId : true
+  //       )
+  //     )
+  //   )
+
+  constructor(
+    private productService: ProductService,
+    private productCategoryService: ProductCategoryService
+  ) { }
 
   onAdd(): void {
     console.log('Not yet implemented');
   }
 
   onSelected(categoryId: string): void {
-    console.log('Not yet implemented');
+    // this.selectedCategoryId = +categoryId;
+    this.categorySelectedSubject.next(+categoryId);
   }
 }
