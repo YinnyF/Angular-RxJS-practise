@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 
-import { catchError, combineLatest, EMPTY, filter, map, Subject, startWith } from 'rxjs';
+import { catchError, combineLatest, EMPTY, filter, map, Subject, startWith, BehaviorSubject } from 'rxjs';
 import { ProductCategory } from '../product-categories/product-category';
 import { ProductCategoryService } from '../product-categories/product-category.service';
 
@@ -18,7 +18,7 @@ export class ProductListComponent {
   // selectedCategoryId?: number;
 
   // create action stream
-  private categorySelectedSubject = new Subject<number>();
+  private categorySelectedSubject = new BehaviorSubject<number>(0);
   categorySelectedAction$ = this.categorySelectedSubject.asObservable();
 
   categories$ = this.productCategoryService.productCategories$
