@@ -29,9 +29,9 @@ export class ProductListComponent {
       })
     );
 
-  // product stream uses new productsWithAdd$ stream
+  // product stream uses new productsWithCRUD$ stream
   products$ = combineLatest([
-    this.productService.productsWithAdd$,
+    this.productService.productsWithCRUD$,
     this.categorySelectedAction$
       .pipe(
         // set initial value
@@ -77,5 +77,9 @@ export class ProductListComponent {
   onSelected(categoryId: string): void {
     // this.selectedCategoryId = +categoryId;
     this.categorySelectedSubject.next(+categoryId);
+  }
+
+  onUpdate(product: Product): void {
+    this.productService.updateProduct(product);
   }
 }
