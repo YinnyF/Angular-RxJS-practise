@@ -29,9 +29,9 @@ export class ProductListComponent {
       })
     );
 
-
+  // product stream uses new productsWithAdd$ stream
   products$ = combineLatest([
-    this.productService.productsWithCategory$,
+    this.productService.productsWithAdd$,
     this.categorySelectedAction$
       .pipe(
         // set initial value
@@ -71,7 +71,7 @@ export class ProductListComponent {
   ) { }
 
   onAdd(): void {
-    console.log('Not yet implemented');
+    this.productService.addProduct();
   }
 
   onSelected(categoryId: string): void {

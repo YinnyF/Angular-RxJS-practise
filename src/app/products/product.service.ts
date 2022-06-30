@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { BehaviorSubject, catchError, combineLatest, map, Observable, tap, throwError } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan } from 'rxjs';
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
@@ -34,20 +34,7 @@ export class ProductService {
     ),
   )
 
-  // map(products => 
-  //   // fyi: can use for each loop?
-  //   // products.forEach(product => {
-  //   //   product.price = product.price ? (product.price * 1.5) : 0;
-  //   //   product.searchKey = [product.productName];
-  //   // })
-
-  //   products.map(product => ({
-  //     ...product,
-  //     price: product.price ? product.price * 1.5 : 0,
-  //     searchKey: [product.productName]
-  //   }))
-  // ),
-
+  // create action stream for selected product id
   private productSelectedSubject = new BehaviorSubject<number>(0);
   productSelectedAction$ = this.productSelectedSubject.asObservable();
 
@@ -61,6 +48,21 @@ export class ProductService {
     tap(product => console.log('selectedProduct', product))
   )
 
+  // create action stream for new product created
+  private productInsertedSubject = new Subject<Product>();
+  productInsertedAction$ = this.productInsertedSubject.asObservable();
+
+  // combine action stream with data stream
+  productsWithAdd$ = merge(
+    this.productsWithCategory$,
+    this.productInsertedAction$
+  ).pipe(
+    scan((acc, value) =>
+      (value instanceof Array) ? [...value] : [...acc, value], [] as Product[]
+    )
+  )
+
+
   constructor(private http: HttpClient, private productCategoryService: ProductCategoryService) { }
 
   private fakeProduct(): Product {
@@ -71,7 +73,7 @@ export class ProductService {
       description: 'Our new product',
       price: 8.9,
       categoryId: 3,
-      // category: 'Toolbox',
+      category: 'Toolbox',
       quantityInStock: 30
     };
   }
@@ -94,6 +96,11 @@ export class ProductService {
 
   selectedProductChanged(selectedProductId: number): void {
     this.productSelectedSubject.next(selectedProductId);
+  }
+
+  addProduct(newProduct?: Product): void {
+    newProduct = newProduct || this.fakeProduct();
+    this.productInsertedSubject.next(newProduct);
   }
 
 }
