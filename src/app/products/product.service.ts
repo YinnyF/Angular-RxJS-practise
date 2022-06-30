@@ -91,6 +91,10 @@ export class ProductService {
           product.id === operation.item.id ? operation.item : product
         )
         break;
+      case 'delete':
+        // Filter out the deleted product
+        return products.filter(product => product.id !== operation.item.id);
+        break;
       default:
         return [...products];
     }
@@ -126,6 +130,13 @@ export class ProductService {
     this.productModifiedSubject.next({
       item: updatedProduct,
       action: 'update'
+    });
+  }
+
+  deleteProduct(selectedProduct: Product): void {
+    this.productModifiedSubject.next({
+      item: selectedProduct,
+      action: 'delete'
     });
   }
 

@@ -82,4 +82,8 @@ export class ProductListComponent {
   onUpdate(product: Product): void {
     this.productService.updateProduct(product);
   }
+  
+  onDelete(product: Product): void {
+    this.productService.deleteProduct(product);
+  }
 }
