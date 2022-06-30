@@ -51,19 +51,19 @@ export class ProductService {
     tap(product => console.log('selectedProduct', product))
   )
 
-  // action stream for new product created
-  private productInsertedSubject = new Subject<Product>();
-  productInsertedAction$ = this.productInsertedSubject.asObservable();
+  // // action stream for new product created
+  // private productInsertedSubject = new Subject<Product>();
+  // productInsertedAction$ = this.productInsertedSubject.asObservable();
 
-  // combine action stream with data stream
-  productsWithAdd$ = merge(
-    this.productsWithCategory$,
-    this.productInsertedAction$
-  ).pipe(
-    scan((acc, value) =>
-      (value instanceof Array) ? [...value] : [...acc, value], [] as Product[]
-    )
-  );
+  // // combine action stream with data stream
+  // productsWithAdd$ = merge(
+  //   this.productsWithCategory$,
+  //   this.productInsertedAction$
+  // ).pipe(
+  //   scan((acc, value) =>
+  //     (value instanceof Array) ? [...value] : [...acc, value], [] as Product[]
+  //   )
+  // );
 
   // action stream for add/update/delete products
   // FYI: Action here is a custom interface from '../../shared/edit-action'
@@ -80,19 +80,58 @@ export class ProductService {
   );
 
   private modifyProducts(products: Product[], operation: Action<Product>): Product[] {
-    if (operation.action === 'update') {
-      // return a new array with the updated product replaced
-      return products.map(product => 
-        product.id === operation.item.id ? operation.item : product
-      )
+    switch (operation.action) {
+      case 'add':
+        // return a new array with the added product pushed to it
+        return [...products, operation.item]
+        break;
+      case 'update':
+        // return a new array with the updated product replaced
+        return products.map(product =>
+          product.id === operation.item.id ? operation.item : product
+        )
+        break;
+      default:
+        return [...products];
     }
-
-    return [...products];
   }
 
-  constructor(private http: HttpClient, private productCategoryService: ProductCategoryService) { }
+  constructor(
+    private http: HttpClient,
+    private productCategoryService: ProductCategoryService
+  ) { }
 
+  selectedProductChanged(selectedProductId: number): void {
+    this.productSelectedSubject.next(selectedProductId);
+  }
+
+  addProduct(newProduct?: Product): void {
+    newProduct = newProduct || this.fakeProduct();
+
+    this.productModifiedSubject.next({
+      item: newProduct,
+      action: 'add'
+    });
+  }
+
+  updateProduct(selectedProduct: Product): void {
+    // update a copy of the selected product
+
+    // for now 'updating' a product is just increasing the quantity.
+    const updatedProduct = {
+      ...selectedProduct,
+      quantityInStock: selectedProduct.quantityInStock ? selectedProduct.quantityInStock + 1 : 1
+    } as Product;
+
+    this.productModifiedSubject.next({
+      item: updatedProduct,
+      action: 'update'
+    });
+  }
+
+  // *** PRIVATE METHODS **
   private fakeProduct(): Product {
+    // TODO: Bug - ids are not unique
     return {
       id: 42,
       productName: 'Another One',
@@ -121,26 +160,4 @@ export class ProductService {
     return throwError(() => errorMessage);
   }
 
-  selectedProductChanged(selectedProductId: number): void {
-    this.productSelectedSubject.next(selectedProductId);
-  }
-
-  addProduct(newProduct?: Product): void {
-    newProduct = newProduct || this.fakeProduct();
-    this.productInsertedSubject.next(newProduct);
-  }
-
-  updateProduct(selectedProduct: Product): void {
-    // update a copy of the selected product
-    // for now 'updating' a product is just increasing the quantity.
-    const updatedProduct = {
-      ...selectedProduct,
-      quantityInStock: selectedProduct.quantityInStock ? selectedProduct.quantityInStock + 1 : 1
-    } as Product;
-
-    this.productModifiedSubject.next({
-      item: updatedProduct,
-      action: 'update'
-    });
-  }
 }
