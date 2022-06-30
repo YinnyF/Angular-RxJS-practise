@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan, shareReplay } from 'rxjs';
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
@@ -34,6 +34,7 @@ export class ProductService {
         searchKey: [product.productName]
       } as Product))
     ),
+    shareReplay(1),
   )
 
   // *** ACTION STREAMS ***
@@ -48,7 +49,8 @@ export class ProductService {
     map(([products, selectedProductId]) =>
       products.find(product => product.id === selectedProductId)
     ),
-    tap(product => console.log('selectedProduct', product))
+    tap(product => console.log('selectedProduct', product)),
+    shareReplay(1)
   )
 
   // // action stream for new product created
