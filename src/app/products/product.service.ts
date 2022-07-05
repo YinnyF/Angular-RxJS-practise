@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan, shareReplay } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan, shareReplay, filter } from 'rxjs';
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
 import { Action } from '../shared/edit-action';
+import { SupplierService } from '../suppliers/supplier.service';
 
 @Injectable({
   providedIn: 'root'
@@ -51,6 +52,15 @@ export class ProductService {
     ),
     tap(product => console.log('selectedProduct', product)),
     shareReplay(1)
+  )
+
+  selectedProductSuppliers$ = combineLatest([
+    this.selectedProduct$,
+    this.supplierService.suppliers$
+  ]).pipe(
+    map(([selectedProduct, suppliers]) =>
+      suppliers.filter(supplier => selectedProduct?.supplierIds?.includes(supplier.id))
+    )
   )
 
   // // action stream for new product created
@@ -104,7 +114,8 @@ export class ProductService {
 
   constructor(
     private http: HttpClient,
-    private productCategoryService: ProductCategoryService
+    private productCategoryService: ProductCategoryService,
+    private supplierService: SupplierService
   ) { }
 
   selectedProductChanged(selectedProductId: number): void {
