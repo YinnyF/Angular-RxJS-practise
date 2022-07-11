@@ -1,12 +1,13 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 
-import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan, shareReplay, filter } from 'rxjs';
+import { BehaviorSubject, catchError, combineLatest, map, merge, Observable, Subject, tap, throwError, scan, shareReplay, filter, switchMap, forkJoin, of } from 'rxjs';
 
 import { Product } from './product';
 import { ProductCategoryService } from '../product-categories/product-category.service';
 import { Action } from '../shared/edit-action';
 import { SupplierService } from '../suppliers/supplier.service';
+import { Supplier } from '../suppliers/supplier';
 
 @Injectable({
   providedIn: 'root'
@@ -54,14 +55,29 @@ export class ProductService {
     shareReplay(1)
   )
 
-  selectedProductSuppliers$ = combineLatest([
-    this.selectedProduct$,
-    this.supplierService.suppliers$
-  ]).pipe(
-    map(([selectedProduct, suppliers]) =>
-      suppliers.filter(supplier => selectedProduct?.supplierIds?.includes(supplier.id))
+  // // get it all approach
+  // selectedProductSuppliers$ = combineLatest([
+  //   this.selectedProduct$,
+  //   this.supplierService.suppliers$
+  // ]).pipe(
+  //   map(([selectedProduct, suppliers]) =>
+  //     suppliers.filter(supplier => selectedProduct?.supplierIds?.includes(supplier.id))
+  //   )
+  // )
+
+  // Just in time, switchmap reduces hits to server
+  selectedProductSuppliers$ = this.selectedProduct$
+    .pipe(
+      filter(product => Boolean(product)),
+      switchMap(selectedProduct => {
+        if (selectedProduct?.supplierIds) {
+          return forkJoin(selectedProduct.supplierIds.map(supplierId => this.http.get<Supplier>(`${this.suppliersUrl}/${supplierId}`)))
+        } else {
+          return of([]);
+        }
+      }),
+      tap(suppliers => console.log('product suppliers', JSON.stringify(suppliers)))
     )
-  )
 
   // // action stream for new product created
   // private productInsertedSubject = new Subject<Product>();
